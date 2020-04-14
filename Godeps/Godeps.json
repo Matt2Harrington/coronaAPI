@@ -1,0 +1,32 @@
+{
+	"ImportPath": "github.com/CoronaAPI",
+	"GoVersion": "go1.14",
+	"GodepVersion": "v80",
+	"Deps": [
+		{
+			"ImportPath": "github.com/alecthomas/gometalinter/_linters/src/gopkg.in/yaml.v2",
+			"Comment": "v3.0.0-3-g32416ab",
+			"Rev": "32416ab75314da538e4a51cdf3c6189b66fe3de4"
+		},
+		{
+			"ImportPath": "github.com/google/uuid",
+			"Comment": "v1.1.1-10-gbd45158",
+			"Rev": "bd451584982ecf4ca5b1e5938cf168e17e30d837"
+		},
+		{
+			"ImportPath": "github.com/lib/pq",
+			"Comment": "v1.3.0-6-g356e267",
+			"Rev": "356e267cd3f45ee1303b7d8765e3583cb949950e"
+		},
+		{
+			"ImportPath": "github.com/lib/pq/oid",
+			"Comment": "v1.3.0-6-g356e267",
+			"Rev": "356e267cd3f45ee1303b7d8765e3583cb949950e"
+		},
+		{
+			"ImportPath": "github.com/lib/pq/scram",
+			"Comment": "v1.3.0-6-g356e267",
+			"Rev": "356e267cd3f45ee1303b7d8765e3583cb949950e"
+		}
+	]
+}
