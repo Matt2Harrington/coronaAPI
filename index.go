@@ -12,6 +12,7 @@ import (
 	"strings"
 	"time"
 	_ "github.com/lib/pq"
+	"github.com/gorilla/mux"
 )
 
 var (
@@ -63,6 +64,8 @@ type Postgres struct {
 	DBName string`yaml:"databaseName"`
 }
 
+var coronaData []Data
+
 func (c *Postgres) getPostgres() *Postgres {
 	yamlFile, err := ioutil.ReadFile("config.yaml")
 	if err != nil {
@@ -86,7 +89,6 @@ func setUpPostgres() (*sql.DB, error) {
 		return db, err
 	}
 
-
 	err = db.Ping()
 	if err != nil {
 		return db, err
@@ -104,6 +106,8 @@ func homePage(w http.ResponseWriter, r *http.Request){
 func handleRequests() {
 	http.HandleFunc("/", homePage)
 	http.HandleFunc("/corona", indexHandler)
+	http.HandleFunc("/new", indexDistinctNewestEntryHandler)
+	//http.HandleFunc("/corona/{country}", returnSingleCountry)
 	log.Fatal(http.ListenAndServe(":10000", nil))
 }
 
@@ -136,6 +140,76 @@ func indexHandler(w http.ResponseWriter, req *http.Request) {
 	fmt.Println("Endpoint Hit: Data")
 	fmt.Fprintf(w, string(out))
 }
+
+// indexHandler calls `queryRepos()` and marshals the result as JSON
+func indexDistinctNewestEntryHandler(w http.ResponseWriter, req *http.Request) {
+	data := dataInfo{}
+
+	err = queryDistinctNewestEntries(&data)
+	if err != nil {
+		http.Error(w, err.Error(), 500)
+		return
+	}
+
+	out, err := json.Marshal(data)
+	if err != nil {
+		http.Error(w, err.Error(), 500)
+		return
+	}
+	fmt.Println("Endpoint Hit: Newest Entry Data")
+	fmt.Fprintf(w, string(out))
+}
+
+func returnSingleCountry(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	key := vars["country"]
+
+	for _, data := range coronaData {
+		if data.Country == key {
+			json.NewEncoder(w).Encode(data)
+		}
+	}
+}
+
+// queryDistinctNewest
+func queryDistinctNewestEntries(dataInfo *dataInfo) error {
+	rows, err := db.Query(`
+		select distinct on (country)
+		updated, country, cases, cases_today, deaths, deaths_today, recovered, active, 
+		critical, cases_per_one_million, deaths_per_one_million
+		FROM data ORDER BY country, updated DESC;`)
+	if err != nil {
+		return err
+	}
+	defer rows.Close()
+	for rows.Next() {
+		data := Data{}
+		//info := Info{}
+		err = rows.Scan(
+			&data.Updated,
+			&data.Country,
+			&data.Cases,
+			&data.CasesToday,
+			&data.Deaths,
+			&data.DeathsToday,
+			&data.Recovered,
+			&data.Active,
+			&data.Critical,
+			&data.CasesPerOneMillion,
+			&data.DeathsPerOneMillion,
+		)
+		if err != nil {
+			return err
+		}
+		dataInfo.DataList = append(dataInfo.DataList, data)
+	}
+	err = rows.Err()
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 // queryRepos first fetches the repositories data from the db
 func queryData(dataInfo *dataInfo) error {
 	rows, err := db.Query(`
