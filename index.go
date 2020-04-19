@@ -12,7 +12,6 @@ import (
 	"strings"
 	"time"
 	_ "github.com/lib/pq"
-	"github.com/gorilla/mux"
 )
 
 var (
@@ -160,16 +159,16 @@ func indexDistinctNewestEntryHandler(w http.ResponseWriter, req *http.Request) {
 	fmt.Fprintf(w, string(out))
 }
 
-func returnSingleCountry(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	key := vars["country"]
-
-	for _, data := range coronaData {
-		if data.Country == key {
-			json.NewEncoder(w).Encode(data)
-		}
-	}
-}
+//func returnSingleCountry(w http.ResponseWriter, r *http.Request) {
+//	vars := mux.Vars(r)
+//	key := vars["country"]
+//
+//	for _, data := range coronaData {
+//		if data.Country == key {
+//			json.NewEncoder(w).Encode(data)
+//		}
+//	}
+//}
 
 // queryDistinctNewest
 func queryDistinctNewestEntries(dataInfo *dataInfo) error {
