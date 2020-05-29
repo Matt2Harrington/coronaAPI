@@ -6,13 +6,15 @@ import (
 	"fmt"
 	"github.com/alecthomas/gometalinter/_linters/src/gopkg.in/yaml.v2"
 	"github.com/google/uuid"
+	"github.com/joho/godotenv"
+	_ "github.com/lib/pq"
 	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
+	"strconv"
 	"strings"
 	"time"
-	_ "github.com/lib/pq"
 )
 
 var (
@@ -81,12 +83,16 @@ func (c *Postgres) getPostgres() *Postgres {
 
 func (c *Postgres) getPostgresENV() []string {
 	var values []string
+	if err := godotenv.Load(); err != nil {
+		log.Print("No .env file found")
+	}
+
 	hostEnv := os.Getenv("host")
-	usernameEnv := os.Getenv("username")
+	usernameEnv := os.Getenv("user")
 	passwordEnv := os.Getenv("password")
 	portEnv := os.Getenv("port")
 	dataNameEnv := os.Getenv("database")
-	
+
 	values = append(values, hostEnv)
 	values = append(values, portEnv)
 	values = append(values, usernameEnv)
@@ -96,10 +102,20 @@ func (c *Postgres) getPostgresENV() []string {
 	return values
 }
 
-func setUpPostgres() (*sql.DB, error) {
-	values := pg.getPostgresENV()
-	psqlInfo := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable",
-		values[0], values[1], values[2], values[3], values[4])
+func setUpPostgres(local bool) (*sql.DB, error) {
+	var psqlInfo string
+	if local {
+		values := pg.getPostgres()
+		psqlInfo = fmt.Sprintf("host=%s port=%d user=%s dbname=%s sslmode=disable",
+			values.Host, values.Port, values.User, values.DBName)
+	} else {
+		values := pg.getPostgresENV()
+		port, _ := strconv.Atoi(values[1])
+		psqlInfo = fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=require",
+			values[0], port, values[2], values[3], values[4])
+
+		fmt.Print(values)
+	}
 
 	db, err := sql.Open("postgres", psqlInfo)
 	if err != nil {
@@ -275,7 +291,7 @@ func queryData(dataInfo *dataInfo) error {
 
 func main() {
 	// call to database to setup
-	db, err = setUpPostgres()
+	db, err = setUpPostgres(false)
 	if err != nil {
 		log.Fatal(err)
 	}
