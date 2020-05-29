@@ -9,6 +9,7 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"os"
 	"strings"
 	"time"
 	_ "github.com/lib/pq"
@@ -78,10 +79,27 @@ func (c *Postgres) getPostgres() *Postgres {
 	return c
 }
 
+func (c *Postgres) getPostgresENV() []string {
+	var values []string
+	hostEnv := os.Getenv("host")
+	usernameEnv := os.Getenv("username")
+	passwordEnv := os.Getenv("password")
+	portEnv := os.Getenv("port")
+	dataNameEnv := os.Getenv("database")
+	
+	values = append(values, hostEnv)
+	values = append(values, portEnv)
+	values = append(values, usernameEnv)
+	values = append(values, passwordEnv)
+	values = append(values, dataNameEnv)
+
+	return values
+}
+
 func setUpPostgres() (*sql.DB, error) {
-	values := pg.getPostgres()
-	psqlInfo := fmt.Sprintf("host=%s port=%d user=%s dbname=%s sslmode=disable",
-		values.Host, values.Port, values.User, values.DBName)
+	values := pg.getPostgresENV()
+	psqlInfo := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable",
+		values[0], values[1], values[2], values[3], values[4])
 
 	db, err := sql.Open("postgres", psqlInfo)
 	if err != nil {
